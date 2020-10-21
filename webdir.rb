@@ -26,7 +26,9 @@ def scan(lweb, ldir, ssl, response_code)
       begin
         req = "#{url}#{dir}"
         clock = Time.now # avoid calling Time.now many times
-        timestamp = "#{clock.hour}:#{clock.min}:#{clock.sec}"
+        timestamp = "#{clock.hour.to_s.rjust(2, '0')}:"
+        timestamp += "#{clock.min.to_s.rjust(2, '0')}:"
+        timestamp += "#{clock.sec.to_s.rjust(2, '0')}"
         print "[#{$L_PURPLE}#{timestamp}#{$NC}] Requesting: "
         puts "#{$UNDERLINE}#{req}#{$NORMAL}"
         resp = HTTParty.get(req, :verify => ssl)
