@@ -3,6 +3,16 @@ require 'httparty'
 require 'optparse'
 
 
+$RED="\033[0;31m"
+$GREEN="\033[0;32m"
+$ORANGE="\033[0;33m"
+$L_PURPLE="\033[1;35m"
+
+$NORMAL = "\033[0m"
+$UNDERLINE = "\033[4m"
+
+$NC="\033[0m"
+
 def scan(lweb, ldir, ssl, response_code)
   begin
     _urls = File.open(lweb, 'r').read.split("\n")
@@ -15,9 +25,13 @@ def scan(lweb, ldir, ssl, response_code)
     _dirs.each do |dir|
       begin
         req = "#{url}#{dir}"
-        print "Requesting: #{req}"
+        clock = Time.now # avoid calling Time.now many times
+        timestamp = "#{clock.hour}:#{clock.min}:#{clock.sec}"
+        print "[#{$L_PURPLE}#{timestamp}#{$NC}] Requesting: "
+        puts "#{$UNDERLINE}#{req}#{$NORMAL}"
         resp = HTTParty.get(req, :verify => ssl)
-        puts "\n  ->#{resp.code}[#{response_code[resp.code.to_s]}]"
+        print "[#{$L_PURPLE}#{timestamp}#{$NC}]"
+        puts " --> #{resp.code}[#{response_code[resp.code.to_s]}]"
       rescue Interrupt
         puts "Leaving the program..."
         exit
@@ -28,14 +42,10 @@ def scan(lweb, ldir, ssl, response_code)
   end
 end
 
-RED="\033[0;31m"
-GREEN="\033[0;32m"
-ORANGE="\033[0;33m"
-NC="\033[0m"
-response_code = {"200"=>"#{GREEN}OK#{NC}",
-                 "404"=>"#{RED}Not Found#{NC}",
-                 "403"=>"#{ORANGE}Forbidden#{NC}",
-                 "406"=>"#{RED}Not Acceptable#{NC}"}
+response_code = {"200"=>"#{$GREEN}OK#{$NC}",
+                 "404"=>"#{$RED}Not Found#{$NC}",
+                 "403"=>"#{$ORANGE}Forbidden#{$NC}",
+                 "406"=>"#{$RED}Not Acceptable#{$NC}"}
 
 list_web = ''
 list_dir = ''
