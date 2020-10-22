@@ -79,9 +79,11 @@ def get(url, ssl, ignore_list, response_code)
     resp = HTTParty.get(url, :verify => ssl)
     if !ignore_list.include?(resp.code.to_s)
       clock = Time.now # avoid calling Time.now many times
+      # for realtime checking
       timestamp = "#{clock.hour.to_s.rjust(2, '0')}:"
       timestamp += "#{clock.min.to_s.rjust(2, '0')}:"
       timestamp += "#{clock.sec.to_s.rjust(2, '0')}"
+      #
       print "[#{$L_PURPLE}#{timestamp}#{$NC}] #{$ORANGE}Path#{$NC} : "
       puts "#{$UNDERLINE}#{url}#{$NORMAL}"
       print "[#{$L_PURPLE}#{timestamp}#{$NC}]"
@@ -90,7 +92,7 @@ def get(url, ssl, ignore_list, response_code)
   rescue OpenSSL::SSL::SSLError
     puts "#{$RED}SSL Error!#{$NC}"
   rescue Errno::ECONNREFUSED
-    puts "#{$RED}Connection Refused!#{$NC}"
+    puts "#{$RED}#Connection to #{url} Refused!#{$NC}"
   end
 end
 
@@ -103,15 +105,23 @@ def scan(lweb, ldir, ssl, ignore_list, response_code, thread_num)
   "Number of thread(s)      : #{thread_num}\n\n"
 
   begin
-    _urls = File.open(lweb, 'r').read.split("\n")
-    _dirs = File.open(ldir, 'r').read.split("\n")
+    _urls = File.open(lweb, 'r').read.split("\n").map{|s| s.gsub(/[\r\n]+/m, "")} 
+    _dirs = File.open(ldir, 'r').read.split("\n").map{|s| s.gsub(/[\r\n]+/m, "")} 
   rescue Errno::ENOENT => e
     puts e
   end
 
   _urls.each do |url|
     puts "#{$ORANGE}Scanning : #{$L_GRAY}#{url}#{$NC}"
-    links = _dirs.map{|dir| url + dir}
+    links = _dirs.map do |dir|
+      if dir[0] == '/'
+        "#{url}#{dir}"
+      elsif dir[0] == '#'
+        nil #skipping comment section
+      else
+        "#{url}/#{dir}"
+      end
+    end
     while links.empty? == false do 
       begin
         threads = []
